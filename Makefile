@@ -1,3 +1,5 @@
+tweet_text.txt:
+	./download.py list_tweets_uniq.txt > tweet_text.txt
 list_tweets_uniq.txt:
 	./unique_tweet.sh
 en_es_training_offsets.tsv:
