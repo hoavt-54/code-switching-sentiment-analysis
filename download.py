@@ -24,13 +24,13 @@ if(__name__ == "__main__"):
     chunk = []
     with open(sys.argv[1], 'r') as f:
         for line in f:
-            if (len(chunk) < 2):
+            if (len(chunk) < 95):
                 chunk.append(line.rstrip())
             else:
                 chunk.append(line.rstrip())
                 downloader.download(chunk)
                 chunk = []
-                time.sleep(2)
+                time.sleep(3)
         if (len(chunk) > 0): download(chunk)
 
 
