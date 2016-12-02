@@ -3,19 +3,28 @@
 from vaderSentiment.vaderSentiment import sentiment as vaderSentiment
 import sys
 
-err, pos, neu, neg = 0, 0, 0, 0
-vs = vaderSentiment("I love all Erasmus LCT students")
-print(str(vs))
-print ()
+err, emo, pos, neu, neg = 0, 0, 0, 0, 0
+
 with open (sys.argv[1], 'r') as f:
     for line in f:
         try:
             tweetId, text = line.strip().split('\t')
-            print (text), 
+            #print (text), 
             vs = vaderSentiment(text)
-            print ("\n\t" + str(vs))
+            vpos, vneg, vneu = vs["pos"], vs["neg"], vs["neu"]
+            # if pos score is highest then this tweet's classified as pos
+            if(vpos > vneu and vpos > vneg):
+                pos = pos + 1
+            # if neg score is highest
+            if (vneg > vpos and vneg > vneu):
+                neg = neg + 1
+            # this tweet is classified as emotional if 
+            if(vpos > vneu or vneg > vneu):
+                emo = emo +1
+            # otherwise it's neutral
+            elif(vneu > vneg and vneu > vpos):
+                neu = neu + 1
         except:
-            print "Unexpected error:", sys.exc_info()[0]
-            print line.strip().split('\t')
-            exit()
-
+            err = err + 1
+            pass
+print ("emo: %d \tpos: %d\t neu: %d\t neg: %d\t err: %d" % (emo, pos, neu, neg, err))
