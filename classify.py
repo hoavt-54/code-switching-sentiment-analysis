@@ -12,7 +12,7 @@ with open (sys.argv[1], 'r') as f:
             print (text),
             vs = vaderSentiment(text)
             vpos, vneg, vneu = vs["pos"], vs["neg"], vs["neu"]
-			print("\t", str(vs))
+	    print("\t", str(vs))
 			'''
             # if pos score is highest then this tweet's classified as pos
             if(vpos > vneu and vpos > vneg):
