@@ -13,7 +13,7 @@ class TweetDownloader(object):
     def download(self, tweetIds, label_dict):
         for status in self.api.statuses_lookup(tweetIds):
             if(str(status.id) in label_dict):
-                print(label_dict[str(status.id)], "\t" ,status.text)
+                print(label_dict[str(status.id)], "\t" , status.id , "\t", status.text.replace("\n", " "))
             else: print(status.id, '\t', status.text)
         
 
