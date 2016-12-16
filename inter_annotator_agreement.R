@@ -1,5 +1,5 @@
 # This R script calculates Fleiss Kappa for the inter-annotator agreement
-# the data file is ratings.txt, it consists of one column per rater, separated by \table
+# the data file is ratings.txt, it consists of one column per rater, separated by \t
 # and containing only the ratings.
 
 install.packages(c("irr"))
