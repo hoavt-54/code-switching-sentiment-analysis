@@ -12,7 +12,7 @@ class TweetDownloader(object):
 
     def download(self, tweetIds):
         for status in self.api.statuses_lookup(tweetIds):
-                print(status.id, "\t",status.text)
+                print(status.id, "\t", status.text.replace("\n", " "))
         
 
 
@@ -31,8 +31,7 @@ if(__name__ == "__main__"):
                 downloader.download(chunk)
                 chunk = []
                 time.sleep(3)
-        if (len(chunk) > 0): download(chunk)
-
+        if (len(chunk) > 0): downloader.download(chunk)
 
 
 
