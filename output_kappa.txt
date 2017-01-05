@@ -1,0 +1,9 @@
+> kappam.fleiss(ratings)
+ Fleiss' Kappa for m Raters
+
+ Subjects = 27 
+   Raters = 3 
+    Kappa = 0.422 
+
+        z = 5.86 
+  p-value = 4.54e-09 
