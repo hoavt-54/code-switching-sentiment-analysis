@@ -219,8 +219,8 @@ if __name__ == '__main__':
 	random.shuffle(tweets)
 
 	# Splitting into train and test, FOR 1000 TWEETS (CHANGE IT ACCORDINGLY)
-	train = tweets[:450]
-	test = tweets[450:]
+	train = tweets[:900]
+	test = tweets[900:]
 	print(len(test))
 
 	# Applying features to our data. 
