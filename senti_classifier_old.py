@@ -89,7 +89,7 @@ def senti_features(tweet_string):
 
 		features[word] = 1 # This is the bag of words feature. Tried removing uppercase and it was worse for some reason
 
-		'''#SENTIWORDNET, NOT USING
+		''' SENTIWORDNET, NOT USING
 		if list(swn.senti_synsets(word)):	# If this word exists in SentiWordNet:
 			word_sents = list(swn.senti_synsets(word))
 			pos = word_sents[0].pos_score()
@@ -119,7 +119,7 @@ def senti_features(tweet_string):
 
 
 
-def senti_features2(tweet_string):
+def senti_features2(self, tweet_string):
 	'''
 	This is almost the same as senti_features but with mixed input (cs and monolingual)
 	
@@ -130,21 +130,20 @@ def senti_features2(tweet_string):
 	features['contains_emoticon'] = 0
 	features['exclamation'] = 0
 	features['CS'] = False
-	features['positivism']= 0
-	features['negativism'] = 0
 	features['prop_caps'] = 0 # proportion of capital letters
 
 
 	# The CS feature is extracted by checking that the two first characters of the tweet are CS
 	# (In the name-main part I add CS to all of them. Once checked, it is removed:)
 	# (I didnt have time to think of a better way to do this xd)
-	#if tweet_string.startswith('CS'):
-	#	features['CS'] = True
-	#	tweet_string = tweet_string[2:]	
+	if tweet_string.startswith('CS'):
+		features['CS'] = True
+		tweet_string = tweet_string[2:]	
 	
 	tokenizer = TweetTokenizer()	# tokenize it with the tweet tokenizer (better than splitting, probably...)
 	tweet = tokenizer.tokenize(tweet_string)	#tweet_string.split() # this is now a list of words
-
+	print (tweet_string)
+	print(tweet)
 	# Remove mentions of people, we assume they are useless
 	for word in tweet:
 		if word.startswith('@'):
@@ -152,28 +151,16 @@ def senti_features2(tweet_string):
 
 	# Yes, I know not all of them are emoticons as such...
 	# these could be split into laughing and some other categories maybe...
-	emoticons = set(['😠', '😭', ':)', ':(', ';D', ':D',':o', ':p', 'xD', 'lol', 'lmao', '...', 'lmfao','😂', '😋', '😎', '❤', '😏', '👌', '😍','😊','😁','😐','💕', '😛', 'Wtf', 'haha'])
+	emoticons = ['😠', '😭', ':)', ':(', ';D', ':D',':o', ':p', 'xD', 'lol', 'lmao', '...', 'lmfao','😂', '😋', '😎', '❤', '😏', '👌', '😍','😊','😁','😐','💕', '😛', 'Wtf', 'haha']
 
 	# Adding word features 
 	for word in tweet:
+		
 		features[word] = 1 # This is the bag of words feature
 		
-		#SENTIWORDNET, NOT USING
-		if list(swn.senti_synsets(word)):   # If this word exists in SentiWordNet:
-			word_sents = list(swn.senti_synsets(word))
-			pos = word_sents[0].pos_score()
-			neg = word_sents[0].neg_score()
-			obj = word_sents[0].obj_score()
-			if pos > neg:
-				features['positivism'] +=1
-			elif pos < neg:
-				features['negativism'] +=1
-         
-
 		# filling emoticon feature
 		if word in emoticons:
-			features['contains_emoticon'] += 1 
-            #print("contains_emoticon")
+			features['contains_emoticon'] += 1
 
 	# exclamation and capital letter features
 	up = 0
@@ -194,66 +181,66 @@ def senti_features2(tweet_string):
 
 
 def evaluate_classifier(classifier, test_data):
-    '''
-    Outputs the accuracy of the classifier
-    '''
-    correct = 0
-    incorrect = 0
-    for instance in test_data:
-        features = instance[0]
-        real_tag = instance[1]
-        guessed_tag = classifier.classify(features)
-        #print(guessed_tag, features['contains_emoticon'])
-        if real_tag == guessed_tag:
-            correct +=1
-        else:
-            incorrect +=1
+	'''
+	Outputs the accuracy of the classifier
+	'''
+	correct = 0
+	incorrect = 0
+	for instance in test_data:
+		features = instance[0]
+		real_tag = instance[1]
+		guessed_tag = classifier.classify(features)
+		if real_tag == guessed_tag:
+			correct +=1
+		else:
+			incorrect +=1
+		
+	accuracy = correct / (correct + incorrect)
 
-    accuracy = correct / (correct + incorrect)
-    return accuracy
+	return accuracy
 
 
 if __name__ == '__main__':
-    from statistics import mean
-    #tweets = map_sentiment(read_tweets('tweets.txt'))
-    #mono_tweets = read_tweets('tweets.txt')
-    #cs_tweets = read_tweets('cs_tweets.txt')
-    mono_tweets = map_sentiment(read_tweets('500_mono.annotated.txt'))
-    cs_tweets = map_sentiment(read_tweets('500_cs.txt'))
-    # adding the CS mark to code switching tweets. This is needed for the feature extraction. It's ugly, I know.
-    for tweet, label in cs_tweets:
-        tweet = 'CS' + tweet
-    
-    tweets = mono_tweets + cs_tweets
-    accuracies = []
-    for i in range(20):
-        # this is only necessary if mono and cs are mixed
-        random.shuffle(tweets)
-        
-        # Splitting into train and test, FOR 1000 TWEETS (CHANGE IT ACCORDINGLY)
-        train = tweets[:350]
-        #print(train[:3])
-        test = tweets[350:]
-        #print (test[:3])
-        #print(len(test))
-        
-        # Applying features to our data. 
-        train_feat, test_feat = [],[]
-        for instance in train:
-            x = (senti_features2(instance), instance[1])
-            train_feat.append(x)
-        for instance in test:
-            x = (senti_features2(instance), instance[1])
-            test_feat.append(x)
-        print('Training...')
-        # Training the classifier
-        me = MaxentClassifier.train(train_feat, max_iter=10)
-        
-        print('Evaluating...')
-        #print ("accuracy: %.3f" %
-        accuracies.append(evaluate_classifier(me,test_feat))
-    print ("accuracy: %.3f" % mean(accuracies))
 
-	    #print('Best features:')
 
-	    #me.show_most_informative_features()
+	#tweets = map_sentiment(read_tweets('tweets.txt'))
+	#mono_tweets = read_tweets('tweets.txt')
+	#cs_tweets = read_tweets('cs_tweets.txt')
+	
+	mono_tweets = map_sentiment(read_tweets('500_mono.annotated.txt'))
+	cs_tweets = map_sentiment(read_tweets('500_cs.txt'))
+
+	# adding the CS mark to code switching tweets. This is needed for the feature extraction. It's ugly, I know.
+	for tweet, label in cs_tweets:
+		tweet = 'CS' + tweet
+
+	tweets = mono_tweets + cs_tweets
+	
+	# this is only necessary if mono and cs are mixed
+	random.shuffle(tweets)
+
+	# Splitting into train and test, FOR 1000 TWEETS (CHANGE IT ACCORDINGLY)
+	train = tweets[:900]
+	print(train[:3])
+	test = tweets[900:]
+	print(test[:3])
+	print(len(test))
+
+	# Applying features to our data. 
+	train_feat = apply_features(senti_features2, train)
+	print(train_feat[:3])
+	test_feat = apply_features(senti_features2, test)
+
+	print('Training...')
+
+	# Training the classifier
+	me = MaxentClassifier.train(train_feat, max_iter=10)
+
+
+	print('Evaluating...')
+
+	print(evaluate_classifier(me,test_feat))
+
+	print('Best features:')
+
+	me.show_most_informative_features()
