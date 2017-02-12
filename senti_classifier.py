@@ -138,9 +138,10 @@ def senti_features2(tweet_string):
 	# The CS feature is extracted by checking that the two first characters of the tweet are CS
 	# (In the name-main part I add CS to all of them. Once checked, it is removed:)
 	# (I didnt have time to think of a better way to do this xd)
-	#if tweet_string.startswith('CS'):
-	#	features['CS'] = True
-	#	tweet_string = tweet_string[2:]	
+	if tweet_string.startswith('CS'):
+                #print(tweet_string)
+                features['CS'] = True
+                tweet_string = tweet_string[2:]	
 	
 	tokenizer = TweetTokenizer()	# tokenize it with the tweet tokenizer (better than splitting, probably...)
 	tweet = tokenizer.tokenize(tweet_string)	#tweet_string.split() # this is now a list of words
@@ -159,7 +160,7 @@ def senti_features2(tweet_string):
 		features[word] = 1 # This is the bag of words feature
 		
 		#SENTIWORDNET, NOT USING
-		if list(swn.senti_synsets(word)):   # If this word exists in SentiWordNet:
+		"""if list(swn.senti_synsets(word)):   # If this word exists in SentiWordNet:
 			word_sents = list(swn.senti_synsets(word))
 			pos = word_sents[0].pos_score()
 			neg = word_sents[0].neg_score()
@@ -168,7 +169,7 @@ def senti_features2(tweet_string):
 				features['positivism'] +=1
 			elif pos < neg:
 				features['negativism'] +=1
-         
+        """ 
 
 		# filling emoticon feature
 		if word in emoticons:
@@ -216,24 +217,27 @@ def evaluate_classifier(classifier, test_data):
 if __name__ == '__main__':
     from statistics import mean
     #tweets = map_sentiment(read_tweets('tweets.txt'))
-    #mono_tweets = read_tweets('tweets.txt')
-    #cs_tweets = read_tweets('cs_tweets.txt')
-    mono_tweets = map_sentiment(read_tweets('500_mono.annotated.txt'))
+    #mono_tweets = read_tweets('500_mono.annotated.txt')
+    #cs_tweets = read_tweets('500_cs.txt')
     cs_tweets = map_sentiment(read_tweets('500_cs.txt'))
+    mono_tweets = map_sentiment(read_tweets('500_mono.annotated.txt'))
     # adding the CS mark to code switching tweets. This is needed for the feature extraction. It's ugly, I know.
-    for tweet, label in cs_tweets:
+    for idx, (tweet, label)  in enumerate(cs_tweets):
+        #print(label, tweet)
         tweet = 'CS' + tweet
+        cs_tweets[idx] = (tweet,label)
+        mono_tweets.append((tweet, label))
     
-    tweets = mono_tweets + cs_tweets
     accuracies = []
-    for i in range(20):
+    tweets = mono_tweets
+    for i in range(100):
         # this is only necessary if mono and cs are mixed
         random.shuffle(tweets)
         
         # Splitting into train and test, FOR 1000 TWEETS (CHANGE IT ACCORDINGLY)
-        train = tweets[:350]
+        train = tweets[:900]
         #print(train[:3])
-        test = tweets[350:]
+        test = tweets[900:]
         #print (test[:3])
         #print(len(test))
         
@@ -252,8 +256,8 @@ if __name__ == '__main__':
         print('Evaluating...')
         #print ("accuracy: %.3f" %
         accuracies.append(evaluate_classifier(me,test_feat))
+        me.show_most_informative_features()
     print ("accuracy: %.3f" % mean(accuracies))
 
 	    #print('Best features:')
 
-	    #me.show_most_informative_features()

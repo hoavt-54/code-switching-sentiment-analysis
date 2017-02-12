@@ -40,10 +40,11 @@ if(__name__ == "__main__"):
                     chunk = []
                     label_dict = {}
                     time.sleep(3)
-            except:
-                #print (label_dict)
+            except Exception as inst:
+                sys.stderr.write(inst)
+                sys.stderr.write(label_dict)
                 raise
-        if (len(chunk) > 0): download(chunk, label_dict)
+        if (len(chunk) > 0): downloader.download(chunk, label_dict)
 
 
 
