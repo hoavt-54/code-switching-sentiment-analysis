@@ -7,17 +7,24 @@ from nltk.classify.util import apply_features
 import re
 import random
 from nltk.tokenize import TweetTokenizer
+from statistics import mean
 
-# You should pull before doing this because the cs_tweet had a format incompatibility, 
-# I replaced it, it is now fixed. Get the new one.
-
-# This has no sys.argvs, everything is in the name-main part.
+''' This script contains a sentiment classifier for our tweets together with all other
+resources needed for that (reading the tweets, mapping the tags to SENT/NONE), extracting
+the feature from a tweet and calculating the accuracy of the classifier.
+The code is ready to run in the "if __name__ == '__main__':" part.
+If left as such, the script will take all tweets (monolingual and CS) from the files 500_cs and 500_mono.annotated,
+learn a classifier with 90% of the data (training) and evaluate it on the 10%. 
+The CS feature is included.
+This is done 100 times and the mean accuracy is printed at the end.
+In order to change features, go to function senti_features.
+'''
 
 
 def read_tweets(file):
 	'''
 	This function takes a file of tweets with sentiment
-	P	tweet_ID	tweetblablablabla
+	P	tweet_ID	tweet-text
 	and outputs a list of tweets represented as tuples (tweet, sentiment label)
 	'''
 	pattern = re.compile('(.*?)\t(.*?)\t(.*?)\n')
@@ -35,9 +42,9 @@ def read_tweets(file):
 
 def map_sentiment(tweets):
 	'''
-	This function takes a list of tweets (like read_tweet's output) and maps
+	This function takes a list of tweets (in the form of the read_tweets function's output) and maps
 	positive, negative and mixed sentiment to a unique label called SENT.
-	This is used for the SENT vs NONSENT analysis.
+	This is used for the SENT vs NONE analysis.
 	It outputs the same tweet list with the desired mapping.
 	'''
 	new_tweets = []
@@ -54,111 +61,40 @@ def map_sentiment(tweets):
 
 def senti_features(tweet_string):
 	'''
-	This function takes as input a tuple containing a tweet and its sentiment
-	and extracts its features.
-	The features have the form of a dictionary where the key is the name
-	of the feature. 
-	The function outputs the feature dictionary.
-	This is later fed as input for the nltk apply_features function, which
-	takes care of all the dirty work (like turning these features into
-	numbers if I am not mistaken).
-	ITS BETTER TO LOOK AT SENTI_FEATURES2, THE ONE USED FOR MIXED CS AND MONO DATA.
+	This function takes a tweet string as input and outputs a dictionary with its features	
 	'''
-
-	tweet_string = tweet_string[0]	# take the tweet text
-	features = dict()
-	tokenizer = TweetTokenizer()	# tokenize it with the tweet tokenizer (better than splitting, probably...)
-	tweet = tokenizer.tokenize(tweet_string)	#tweet_string.split() # this is now a list of words
-
-	# Remove mentions of people, we assume they are useless
-	for word in tweet:
-		if word.startswith('@'):
-			tweet.remove(word)
-
-	# some default feature values (will change later if necessary)
-	#features['positivism'] = 0 # Removed features for SentiWordNet
-	#features['negativism'] = 0
-	features['contains_emoticon'] = 0
-	features['exclamation'] = 0
-
-	emoticons = ['😠', '😭', ':)', ':(', ';D', ':D',':o', ':p', 'xD', 'lol', 'lmao', '...', 'lmfao','😂', '😋', '😎', '❤', '😏', '👌', '😍','😊','😁','😐','💕', '😛', 'Wtf', 'haha']
-
-	# Adding word features and SentiWordNet features
-	for word in tweet:
-		#word = nltk.stem.WordNetLemmatizer().lemmatize(word) # APPARENTLY, LEMMATIZING IS NOT A GOOD IDEA: ACCURACY DECREASED
-
-		features[word] = 1 # This is the bag of words feature. Tried removing uppercase and it was worse for some reason
-
-		'''#SENTIWORDNET, NOT USING
-		if list(swn.senti_synsets(word)):	# If this word exists in SentiWordNet:
-			word_sents = list(swn.senti_synsets(word))
-			pos = word_sents[0].pos_score()
-			neg = word_sents[0].neg_score()
-			obj = word_sents[0].obj_score()
-			if pos > neg:
-				features['positivism'] +=1
-			elif pos < neg:
-				features['negativism'] +=1
-		'''
-
-		# filling emoticon feature
-		if word in emoticons:
-			features['contains_emoticon'] += 1
-
-
-	for char in tweet_string:
-		if char == '!':
-			features['exclamation'] += 1
-
-
-
-	# other possible features: loooooong words?
-
-	return features
-
-
-
-
-def senti_features2(tweet_string):
-	'''
-	This is almost the same as senti_features but with mixed input (cs and monolingual)
 	
-	'''
-
-	tweet_string = tweet_string[0]
 	features = dict()
-	features['contains_emoticon'] = 0
-	features['exclamation'] = 0
-	features['CS'] = False
-	features['positivism']= 0
-	features['negativism'] = 0
+	features['emoticons'] = 0 # Number of exclamations
+	features['exclamations'] = 0 # Number of exclamations
+	features['positivism']= 0 # SentiWordNet feature
+	features['negativism'] = 0 # SentiWordNet feature
 	features['prop_caps'] = 0 # proportion of capital letters
-
-
-	# The CS feature is extracted by checking that the two first characters of the tweet are CS
-	# (In the name-main part I add CS to all of them. Once checked, it is removed:)
-	# (I didnt have time to think of a better way to do this xd)
-	#if tweet_string.startswith('CS'):
-	#	features['CS'] = True
-	#	tweet_string = tweet_string[2:]	
 	
-	tokenizer = TweetTokenizer()	# tokenize it with the tweet tokenizer (better than splitting, probably...)
-	tweet = tokenizer.tokenize(tweet_string)	#tweet_string.split() # this is now a list of words
+	features['CS'] = False # Whether the tweet is a CS tweet (comment this line and its extraction in order not to use it)
+	# The CS feature is extracted by checking that the two first characters of the tweet are CS
+	# These two characters are added in the "main" part at the end. 
+	# Once checked, it is removed:
+	if tweet_string.startswith('CS'):
+                features['CS'] = True
+                tweet_string = tweet_string[2:]	
+	
+	tokenizer = TweetTokenizer()	# tokenize the tweet with the tweet tokenizer (should be better than just splitting)
+	tweet = tokenizer.tokenize(tweet_string)  # this is now a list of words
 
-	# Remove mentions of people, we assume they are useless
+	# Remove mentions of people starting with @, we assume they are useless (do not convey sentiment)
 	for word in tweet:
 		if word.startswith('@'):
 			tweet.remove(word)
 
-	# Yes, I know not all of them are emoticons as such...
-	# these could be split into laughing and some other categories maybe...
+	# Set of emoticons taken from the data containing both good and bad emoticons and expressions like "lol"
+	# which refer to laughing
 	emoticons = set(['😠', '😭', ':)', ':(', ';D', ':D',':o', ':p', 'xD', 'lol', 'lmao', '...', 'lmfao','😂', '😋', '😎', '❤', '😏', '👌', '😍','😊','😁','😐','💕', '😛', 'Wtf', 'haha'])
 
-	# Adding word features 
+	# Adding the bag of words feature:
 	for word in tweet:
-		features[word] = 1 # This is the bag of words feature
-		
-		#SENTIWORDNET, NOT USING
+		features[word] = 1 		
+		# SentiWordNet features:
 		if list(swn.senti_synsets(word)):   # If this word exists in SentiWordNet:
 			word_sents = list(swn.senti_synsets(word))
 			pos = word_sents[0].pos_score()
@@ -167,35 +103,30 @@ def senti_features2(tweet_string):
 			if pos > neg:
 				features['positivism'] +=1
 			elif pos < neg:
-				features['negativism'] +=1
-         
+				features['negativism'] +=1        
 
-		# filling emoticon feature
+		# filling the emoticon feature
 		if word in emoticons:
-			features['contains_emoticon'] += 1 
-            #print("contains_emoticon")
-
+			features['emoticons'] += 1 
+            
 	# exclamation and capital letter features
 	up = 0
 	length = len(tweet_string)
 	for char in tweet_string:
 		if char == '!':
-			features['exclamation'] += 1
+			features['exclamations'] += 1
 		if char.isupper():
 			up +=1
 	prop_caps = up / length
-	features['prop_caps'] = prop_caps
-
-
-	# other possible features: loooooong words?
+	features['prop_caps'] = prop_caps	
 
 	return features
 
 
-
 def evaluate_classifier(classifier, test_data):
     '''
-    Outputs the accuracy of the classifier
+    This function takes as input a classifier and test data (as a list of tuples) 
+    and outputs the accuracy of the classifier
     '''
     correct = 0
     incorrect = 0
@@ -203,7 +134,6 @@ def evaluate_classifier(classifier, test_data):
         features = instance[0]
         real_tag = instance[1]
         guessed_tag = classifier.classify(features)
-        #print(guessed_tag, features['contains_emoticon'])
         if real_tag == guessed_tag:
             correct +=1
         else:
@@ -214,46 +144,45 @@ def evaluate_classifier(classifier, test_data):
 
 
 if __name__ == '__main__':
-    from statistics import mean
-    #tweets = map_sentiment(read_tweets('tweets.txt'))
-    #mono_tweets = read_tweets('tweets.txt')
-    #cs_tweets = read_tweets('cs_tweets.txt')
-    mono_tweets = map_sentiment(read_tweets('500_mono.annotated.txt'))
-    cs_tweets = map_sentiment(read_tweets('500_cs.txt'))
-    # adding the CS mark to code switching tweets. This is needed for the feature extraction. It's ugly, I know.
-    for tweet, label in cs_tweets:
-        tweet = 'CS' + tweet
     
-    tweets = mono_tweets + cs_tweets
+    #mono_tweets = read_tweets('500_mono.annotated.txt') # monolingual tweets without mapping sentiment
+    #cs_tweets = read_tweets('500_cs.txt') # CS tweets without mapping sentiment
+    cs_tweets = map_sentiment(read_tweets('500_cs.txt')) # cs tweets with sentiment mapping
+    mono_tweets = map_sentiment(read_tweets('500_mono.annotated.txt')) # monolingual tweets with sentiment mapping
+
+    # adding the CS mark to identify CS tweets. This is needed for the feature extraction. 
+    for idx, (tweet, label)  in enumerate(cs_tweets):
+        tweet = 'CS' + tweet
+        cs_tweets[idx] = (tweet,label)
+        mono_tweets.append((tweet, label))
+    
     accuracies = []
-    for i in range(20):
-        # this is only necessary if mono and cs are mixed
+    tweets = mono_tweets
+    for i in range(100):
+        
         random.shuffle(tweets)
         
-        # Splitting into train and test, FOR 1000 TWEETS (CHANGE IT ACCORDINGLY)
-        train = tweets[:350]
-        #print(train[:3])
-        test = tweets[350:]
-        #print (test[:3])
-        #print(len(test))
+        # Splitting into train and test, FOR 1000 tweets (Change it according to data size!!)
+        train = tweets[:900]
+        test = tweets[900:]
         
-        # Applying features to our data. 
+        # Applying features to our data
         train_feat, test_feat = [],[]
         for instance in train:
-            x = (senti_features2(instance), instance[1])
+            x = (senti_features(instance[0]), instance[1])
             train_feat.append(x)
         for instance in test:
-            x = (senti_features2(instance), instance[1])
+            x = (senti_features(instance[0]), instance[1])
             test_feat.append(x)
-        print('Training...')
+		
+        print('Training...')	
         # Training the classifier
         me = MaxentClassifier.train(train_feat, max_iter=10)
         
+	
         print('Evaluating...')
-        #print ("accuracy: %.3f" %
+	# Store all accuracies for different runs
         accuracies.append(evaluate_classifier(me,test_feat))
+        me.show_most_informative_features()
+	# Get final, mean accuracy
     print ("accuracy: %.3f" % mean(accuracies))
-
-	    #print('Best features:')
-
-	    #me.show_most_informative_features()

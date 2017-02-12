@@ -1,0 +1,12 @@
+This is the implementation for an assignment of the Social Media as Multimodal Text class. Our research question: Is Code-Switching related to Sentiment?
+
+1. scripts 
+    - download_vilares.py : script to download Vilares et al. 2016 tweets
+    - download.py : script to download Solorio et al. 2014 tweets
+    - classify_by_vader.py: run VADER to classify English tweets
+    - senti_classifier.py: our MaxEnt classifier
+    
+2. files
+    - 500_cs.txt, 500_mono.txt: 500 code-switching and 500 english tweets annotated manually
+    - en_es_training_offsets.tsv: data from shared task Solorio et al. 2014 
+    - vilares_human_annotation.txt: tweets downloaded among those provided by vilares et al. (2016)

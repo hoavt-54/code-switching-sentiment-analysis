@@ -1,3 +1,7 @@
+all: en_monolingual_tweet_text.txt sent_classifier
+
+sent_classifier:
+	python3 senti_classifier.py
 en_monolingual_tweet_text.txt: id_monolingual_english.txt
 	./download.py id_monolingual_english.txt > en_monolingual_tweet_text.txt
 id_monolingual_english.txt: id_containing_lang2.txt
