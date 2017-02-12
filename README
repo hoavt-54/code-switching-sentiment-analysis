@@ -1,4 +1,5 @@
-## Content
 This is implementation for an assignment of the Social Media as Multimodal class. Our research question: Is Code-Switching related to Sentiment?
 
-
+1. Preprocess 
+    - download_vilares.py : script to download Vilares et al. 2016 tweets
+    - download.py : script to download Solorio et al. 2014 tweets
